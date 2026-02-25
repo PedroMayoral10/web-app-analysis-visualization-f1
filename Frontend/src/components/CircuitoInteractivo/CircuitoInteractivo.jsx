@@ -1,60 +1,57 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Circuito from './Circuito';
 import SelectorSesion from './SeleccionSesion';
 
 export default function CircuitoInteractivo() {
-  
-  // Este componente controla si la simulación está activa
-  const [simulationActive, setSimulationActive] = useState(false); // La simulación empieza inactiva
-  const [refreshTrigger, setRefreshTrigger] = useState(0); // Para forzar recarga del mapa
+  const [simulationActive, setSimulationActive] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  // Nuevo estado para saber a quién estamos siguiendo
+  const [selectedDriver, setSelectedDriver] = useState("");
 
-  // Función que ejecutará la funcion de inicio de simulación en el selector de sesión
-  const handleStartCircuit = () => {
+  const handleStartCircuit = (driverId) => {
+    setSelectedDriver(driverId); // Guardamos el ID (puede ser "" para todos)
     setSimulationActive(true);
-    setRefreshTrigger(prev => prev + 1); // Es un contador para que cuando el usuario pulse "Iniciar simulación" se recargue el mapa con los nuevos datos de la sesión seleccionada
+    setRefreshTrigger(prev => prev + 1);
   };
 
-    return (
-
-        <div className="flex-grow-1 p-4 d-flex justify-content-center align-items-center w-100 overflow-hidden">
-            <div className="w-100 h-100" style={{ maxWidth: '1600px' }}>
-
-                <div className="container-fluid h-100 py-3">
-                    <div className="row h-100">
-
-                        {/* --- COLUMNA IZQUIERDA: MAPA DEL CIRCUITO --- */}
-                        <div className="col-lg-9 h-100 mb-3 mb-lg-0">
-                            {/* Pasamos el estado al mapa para que sepa cuándo trabajar */}
-                            <Circuito active={simulationActive} trigger={refreshTrigger} />
-                        </div>
-
-                        {/* --- COLUMNA DERECHA: SELECCION DE CARRERA/AÑO/PILOTO --- */}
-                        <div className="col-lg-3 h-100">
-                            <div className="card h-100 bg-black border-danger shadow" style={{ borderWidth: '2px', borderRadius: '15px' }}>
-                                <div className="card-body p-4 d-flex flex-column">
-
-                                    <h5 className="text-white mb-4 fw-bold text-uppercase border-bottom border-secondary pb-2">
-                                        Gran premio y piloto - Selección
-                                    </h5>
-
-                                    <div className="mb-4">
-                                        {/* Pasamos la función al selector para que nos avise */}
-                                        <SelectorSesion onStartSimulation={handleStartCircuit} />
-                                    </div>
-
-                                    <div className="mt-auto text-white-50">
-                                        <small>Estado del sistema</small>
-                                        <div className="d-flex align-items-center gap-2 mt-1 text-success">
-                                            <div className="spinner-grow spinner-grow-sm" role="status"></div>
-                                            <span>Sistema Online</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+  return (
+    <div className="flex-grow-1 p-4 d-flex justify-content-center align-items-center w-100 overflow-hidden">
+      <div className="w-100 h-100" style={{ maxWidth: '1600px' }}>
+        <div className="container-fluid h-100 py-3">
+          <div className="row h-100">
+            <div className="col-lg-9 h-100 mb-3 mb-lg-0">
+              {/* Pasamos el driver seleccionado al mapa */}
+              <Circuito 
+                active={simulationActive} 
+                trigger={refreshTrigger} 
+                followedDriver={selectedDriver} 
+              />
             </div>
+
+            <div className="col-lg-3 h-100">
+              <div className="card h-100 bg-black border-danger shadow" style={{ borderWidth: '2px', borderRadius: '15px' }}>
+                <div className="card-body p-4 d-flex flex-column">
+                  <h5 className="text-white mb-4 fw-bold text-uppercase border-bottom border-secondary pb-2">
+                    Gran premio y piloto
+                  </h5>
+
+                  <div className="mb-4">
+                    <SelectorSesion onStartSimulation={handleStartCircuit} />
+                  </div>
+
+                  <div className="mt-auto text-white-50">
+                    <small>Estado del sistema</small>
+                    <div className="d-flex align-items-center gap-2 mt-1 text-success">
+                      <div className="spinner-grow spinner-grow-sm" role="status"></div>
+                      <span>Sistema Online</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-    );
+      </div>
+    </div>
+  );
 }

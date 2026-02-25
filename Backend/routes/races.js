@@ -1,25 +1,9 @@
 var express = require('express');
 var router = express.Router();
 const { connectToDB } = require('../db_mongo');
-const OPENF1_BASE = 'https://api.openf1.org';
 
-async function fetchWithTimeout(url, options = {}, timeout = 10000) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-  options.signal = controller.signal;
 
-  try {
-    const res = await fetch(url, options);
-    clearTimeout(id);
-    if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
-    return await res.json();
-  } catch (err) {
-    clearTimeout(id);
-    throw err;
-  }
-}
-
-// Carreras - MongoDB
+// Carreras de la base de datos histórica
 
 router.get('/', async function(req, res) {
     try {
@@ -32,7 +16,7 @@ router.get('/', async function(req, res) {
     }
 });
 
-// Carreras de un año específico MongoDB
+// Carreras de un año específico de la base de datos histórica
 
 router.get('/year/:year', async function(req, res) {
     try {
@@ -46,24 +30,27 @@ router.get('/year/:year', async function(req, res) {
     }
 });
 
-// --- RUTA OPENF1 carreras de un año ---
+// Carreras de un año  de la base de datos de OpenF1 (solo carreras, no sprints)
 
 router.get('/openf1/year/:year', async function(req, res) {
 
-    const year = req.params.year;
+    const year = parseInt(req.params.year);
 
     if (!year) {
         return res.status(400).json({ error: "Falta el año" });
     }
 
     try {
-        // Pedimos a la API externa solo las carreras (session_name=Race) de ese año (no sprints)
-        const url = `${OPENF1_BASE}/v1/sessions?year=${year}&session_name=Race`;
-        const data = await fetchWithTimeout(url);
+        const db = await connectToDB();
+        // Pedimos a nuestra DB local solo las carreras (session_name=Race) de ese año
+        const data = await db.collection('sessions').find({ 
+            year: year, 
+            session_name: "Race" 
+        }).toArray();
         res.json(data);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: "Error al obtener sesiones" });
+        res.status(500).json({ error: "Error al obtener sesiones desde DB" });
     }
 
 });

@@ -1,23 +1,6 @@
 var express = require('express');
 var router = express.Router();
-
-const OPENF1_BASE = 'https://api.openf1.org';
-
-// --- Función auxiliar Fetch ---
-async function fetchWithTimeout(url, options = {}, timeout = 10000) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-  options.signal = controller.signal;
-  try {
-    const res = await fetch(url, options);
-    clearTimeout(id);
-    if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
-    return await res.json();
-  } catch (err) {
-    clearTimeout(id);
-    throw err;
-  }
-}
+const { connectToDB } = require('../db_mongo');
 
 // Obtener información de una sesión específica OpenF1 (solo de 2023 a 2025). Por ahora sin utilizar ---
 
@@ -29,18 +12,21 @@ router.get('/openf1/:session_key', async function(req, res) {
     }
 
     try {
-        const url = `${OPENF1_BASE}/v1/sessions?session_key=${session_key}`;
-        const data = await fetchWithTimeout(url);
+        const db = await connectToDB();
         
-        // OpenF1 devuelve un array, aunque sea un solo resultado
-        if (data.length > 0) {
-            res.json(data[0]); // Devolvemos el objeto limpio
+        // Buscamos en nuestra colección local 'sessions'
+        // Usamos parseInt porque en la base de datos el session_key es un número
+        const data = await db.collection('sessions').findOne({ session_key: parseInt(session_key) });
+        
+        if (data) {
+            // Devolvemos el objeto directamente como hacía tu lógica original
+            res.json(data); 
         } else {
-            res.status(404).json({ error: "Sesión no encontrada" });
+            res.status(404).json({ error: "Sesión no encontrada en la base de datos local" });
         }
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: "Error al conectar con OpenF1" });
+        res.status(500).json({ error: "Error al consultar la sesión en MongoDB" });
     }
 });
 

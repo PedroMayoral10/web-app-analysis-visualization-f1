@@ -116,13 +116,13 @@ export default function SessionSelector({ onStartSimulation }) {
 
   // Iniciar simulación (coche y mapa del circuito) con la configuración seleccionada
   const handleStart = () => {
-    if (!selectedCircuit || !selectedDriver) { toast.warning("Faltan datos"); return; }
+    if (!selectedCircuit) { toast.warning("Faltan datos"); return; }
     fetch(`${URL_API_BACKEND}/location/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_key: selectedCircuit, driver_number: selectedDriver })
+        body: JSON.stringify({ session_key: selectedCircuit })
     }).then(res => res.json()).then(d => {
-        if (!d.error) { toast.success(`Simulación iniciada`); if (onStartSimulation) onStartSimulation(); }
+        if (!d.error) { toast.success(`Simulación iniciada`); if (onStartSimulation) onStartSimulation(selectedDriver); }
         else toast.error(d.error);
     }).catch(e => toast.error("Error conexión"));
   };
@@ -262,22 +262,27 @@ export default function SessionSelector({ onStartSimulation }) {
             onChange={e => setSelectedDriver(e.target.value)} 
             disabled={!selectedCircuit}
           >
-              <option value="">Selecciona piloto...</option> 
+              <option value="">Todos los pilotos</option> 
               {drivers.map(d => <option key={d.driver_number} value={d.driver_number}>{d.full_name} (#{d.driver_number})</option>)}
           </select>
         </div>
   
         <div className="d-flex gap-2 mt-2">
-            <button className="btn btn-danger flex-grow-1 fw-bold btn-sm py-2" onClick={handleStart} disabled={!selectedDriver || loading}>
-              {loading ? '...' : 'START'}
+            <button 
+                className="btn btn-danger flex-grow-1 fw-bold btn-sm py-2" 
+                onClick={handleStart} 
+                disabled={!selectedCircuit || loading} // CAMBIO AQUÍ: antes era !selectedDriver
+            >
+                {loading ? '...' : 'START'}
             </button>
+
             <button 
                 onClick={handleToggleFavorito} 
                 className="btn btn-sm btn-outline-danger"
                 style={{ minWidth: '40px' }} 
-                disabled={!selectedDriver}
+                disabled={!selectedCircuit} // CAMBIO AQUÍ: antes era !selectedDriver
             >
-              {esFavoritoActual ? "❤️" : "🤍"} 
+                {esFavoritoActual ? "❤️" : "🤍"} 
             </button>
         </div>
     </div>
