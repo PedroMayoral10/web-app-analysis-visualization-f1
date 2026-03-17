@@ -12,6 +12,7 @@ export default function CircuitoInteractivo() {
   const [raceData, setRaceData] = useState({});
   const [totalLaps, setTotalLaps] = useState(0);
   const [eventInfo, setEventInfo] = useState({ name: "", code: "" });
+  const [driverStatus, setDriverStatus] = useState([]);
 
   const f1CountryMapper = {
     "ESP": "es", "BRN": "bh", "KSA": "sa", "AUS": "au", "AZE": "az", 
@@ -20,30 +21,37 @@ export default function CircuitoInteractivo() {
     "QAT": "qa", "USA": "us", "MEX": "mx", "BRA": "br", "UAE": "ae", "CHN": "cn"
   };
 
-
   useEffect(() => {
-    const fetchTotalLaps = async () => {
-      const sKey = raceData?.session_key; 
-      if (!sKey) return;
-      try {
-        const response = await fetch(`${URL_API_BACKEND}/sessions_results/total_laps/${sKey}`);
-        const data = await response.json();
-        // Actualizamos siempre que haya una nueva sKey
-        if (data.total_laps) {
-          setTotalLaps(data.total_laps);
-        } else {
-          setTotalLaps(0);
+    const fetchSessionData = async () => {
+      const session_key = raceData?.session_key;
+
+      // Verificamos que la simulación esté activa y tengamos la key
+      if (simulationActive && session_key) {
+        try {
+          // Total de vueltas
+          const resLaps = await fetch(`${URL_API_BACKEND}/sessions_results/openf1/total_laps/${session_key}`);
+          const dataLaps = await resLaps.json();
+          setTotalLaps(dataLaps.total_laps || 0);
+
+          // Estado de los pilotos (DNF/DNS/DSQ)
+          const resStatus = await fetch(`${URL_API_BACKEND}/sessions_results/openf1/results/${session_key}`);
+          const dataStatus = await resStatus.json();
+          
+          // Solo actualizamos si realmente hay datos, nunca vaciamos
+          if (Array.isArray(dataStatus) && dataStatus.length > 0) {
+            setDriverStatus(dataStatus);
+          }
+
+        } catch (error) {
+          console.error("Error al obtener datos de la sesión:", error);
+          // No tocamos driverStatus si hay error
         }
-      } catch (error) {
-        console.error("Error al obtener total_laps:", error);
-        setTotalLaps(0);
       }
     };
 
-    if (raceData?.session_key) {
-      fetchTotalLaps();
-    }
-  }, [raceData?.session_key]); // Se dispara cada vez que cambia la session_key
+    fetchSessionData();
+  }, [simulationActive, raceData?.session_key]);
+ 
 
   // Cálculo de la vuelta actual para el header global
   const currentLap = useMemo(() => {
@@ -111,6 +119,7 @@ export default function CircuitoInteractivo() {
                     followedDriver={selectedDriver}
                     drivers={driversData} 
                     setRaceData={setRaceData}
+                    driverStatus={driverStatus}
                   />
                 </div>
               </div>
@@ -148,7 +157,10 @@ export default function CircuitoInteractivo() {
                  <h4 className="text-white mb-4 text-uppercase fw-bold" style={{ fontSize: '1.1rem', letterSpacing: '1px' }}>
                    Clasificación y Tiempos
                  </h4>
-                 <TablaCarrera raceData={raceData} />
+                 <TablaCarrera 
+                  raceData={raceData} 
+                  driverStatus={driverStatus} 
+                 />
               </div>
             </div>
           </div>

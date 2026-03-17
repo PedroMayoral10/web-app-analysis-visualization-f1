@@ -1,15 +1,18 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { URL_API_BACKEND } from "../../config";
 
 const mapCoordinates = (val, min, max, size) => {
   return ((val - min) / (max - min)) * size;
 };
 
-export default function Circuito({ active, trigger, followedDriver, drivers, setRaceData }) {
+export default function Circuito({ active, trigger, followedDriver, drivers, setRaceData, driverStatus = [] }) {
   const [trackPoints, setTrackPoints] = useState([]);
   const [allPositions, setAllPositions] = useState({}); 
   const [bounds, setBounds] = useState({ minX: 0, maxX: 0, minY: 0, maxY: 0 });
   const [loadingMap, setLoadingMap] = useState(false);
+
+  // Memoria para evitar que los coches desaparezcan si la API deja de enviarlos tras el DNF
+  const lastKnownPositions = useRef({});
 
   const svgSize = 800;
   const padding = 50;
@@ -67,6 +70,13 @@ export default function Circuito({ active, trigger, followedDriver, drivers, set
       fetch(`${URL_API_BACKEND}/location/current`)
         .then(res => res.json())
         .then(data => {
+          // Actualizar memoria de posiciones para que no desaparezcan
+          Object.entries(data).forEach(([key, value]) => {
+            if (!isNaN(key)) {
+              lastKnownPositions.current[key] = value;
+            }
+          });
+
           setAllPositions(data);
           if (setRaceData) {
             setRaceData(data); // Envía sim_time y race_table al componente padre
@@ -112,9 +122,17 @@ export default function Circuito({ active, trigger, followedDriver, drivers, set
     return { x, y };
   };
 
+  // Vuelta actual del líder de la carrera
+  const leaderLap = useMemo(() => {
+    const raceTable = allPositions.race_table || {};
+    const laps = Object.values(raceTable)
+      .map(d => parseInt(d.lap_number) || 0);
+    return laps.length > 0 ? Math.max(...laps) : 0;
+  }, [allPositions]);
+
   return (
     <div className="card h-100 w-100 position-relative d-flex justify-content-center align-items-center bg-black border-danger shadow" 
-         style={{ borderWidth: '2px', borderRadius: '15px', minHeight: '600px' }}>
+          style={{ borderWidth: '2px', borderRadius: '15px', minHeight: '600px' }}>
       
       {!active && <div className="text-secondary z-1">Selecciona una sesión para comenzar</div>}
       {active && loadingMap && trackPoints.length === 0 && <div className="spinner-border text-danger z-1" role="status"></div>}
@@ -122,7 +140,7 @@ export default function Circuito({ active, trigger, followedDriver, drivers, set
       {active && trackPoints.length > 0 && (
         <div style={{ position: 'relative', width: '100%', paddingTop: '75%' }}> 
           <svg viewBox={`0 0 ${svgSize} ${svgSize}`} preserveAspectRatio="xMidYMid meet" 
-               style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'block' }}>
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'block' }}>
             
             {/* Dibujo de la pista */}
             {trackSegments.map((segPoints, idx) => (
@@ -133,11 +151,26 @@ export default function Circuito({ active, trigger, followedDriver, drivers, set
             ))}
             
             {/* Dibujo de los pilotos */}
-            {Object.keys(allPositions).map(driverNum => {
+            {Object.keys(lastKnownPositions.current).map(driverNum => {
               if (followedDriver && followedDriver !== driverNum) return null;
               if (isNaN(driverNum)) return null; // Ignora race_table y sim_time
 
-              const coords = getScaledCoords(allPositions[driverNum]);
+              const isKnownDriver = drivers.some(d => String(d.driver_number) === String(driverNum));
+              if (!isKnownDriver) return null;
+
+              const status = driverStatus.find(s => String(s.driver_number) === String(driverNum));
+              const maxLaps = status ? parseInt(status.number_of_laps) : 999;
+
+              // LOGICA: DSQ y DNS desaparecen ya. DNF espera a que el líder pase a la vuelta siguiente.
+              let shouldHide = false;
+              if (status) {
+                if (status.dns || status.dsq) shouldHide = true;
+                if (status.dnf && maxLaps >= 0 && leaderLap > maxLaps) shouldHide = true;
+              }
+
+              if (shouldHide) return null;
+
+              const coords = getScaledCoords(lastKnownPositions.current[driverNum]);
               const isFollowed = followedDriver === driverNum;
               const teamColor = driverColours[driverNum] || "#ffffff";
 

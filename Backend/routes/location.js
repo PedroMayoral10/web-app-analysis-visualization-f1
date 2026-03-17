@@ -4,7 +4,7 @@ const { connectToDB } = require('../db_mongo');
 const { getRaceSnapshot } = require('./race_data');
 
 const VELOCIDAD_REFRESCO = 200;
-const BLOQUE_SEGUNDOS = 15; // Aumentado ligeramente para dar aire a la DB con 54M de registros
+const BLOQUE_SEGUNDOS = 15; 
 
 // --- ESTADO GLOBAL ---
 let ultimaRespuesta = {};

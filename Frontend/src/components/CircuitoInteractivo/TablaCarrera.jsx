@@ -1,5 +1,4 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { URL_API_BACKEND } from "../../config";
 import {
   Table,
   TableBody,
@@ -9,25 +8,7 @@ import {
   TableRow,
 } from "../ui/table"; 
 
-// Mantenemos solo la leyenda, el contador ya está en el sticky del padre
-const LeyendaColores = () => (
-  <div className="flex justify-end gap-6 pb-2 px-2">
-    <div className="flex items-center gap-2">
-      <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-      <span className="text-[10px] text-gray-400 font-bold uppercase">Récord general</span>
-    </div>
-    <div className="flex items-center gap-2">
-      <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-      <span className="text-[10px] text-gray-400 font-bold uppercase">Récord personal</span>
-    </div>
-    <div className="flex items-center gap-2">
-      <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-      <span className="text-[10px] text-gray-400 font-bold uppercase">Sin mejora</span>
-    </div>
-  </div>
-);
-
-export default function TablaCarrera({ raceData }) {
+export default function TablaCarrera({ raceData, driverStatus = [], totalLaps = 0 }) {
   const [records, setRecords] = useState({
     session: { s1: 999, s2: 999, s3: 999 },
     personal: {},
@@ -36,62 +17,93 @@ export default function TablaCarrera({ raceData }) {
 
   const [displayedLaps, setDisplayedLaps] = useState({});
 
-  // 1. Extraer el snapshot
   const actualData = useMemo(() => {
-    return raceData?.snapshot || raceData?.race_table || {};
+    // IMPORTANTE: Tu backend envía race_table, priorizamos eso.
+    return raceData?.race_table || raceData?.snapshot || {};
   }, [raceData]);
 
-  // 2. Crear array de pilotos
+  // COLORES DE NEUMÁTICOS
+  const getTyreColor = (compound) => {
+    if (!compound) return "border-zinc-700 text-zinc-400";
+    const c = compound.toUpperCase();
+    if (c.includes("SOFT")) return "border-red-600 text-red-600";
+    if (c.includes("MEDIUM")) return "border-yellow-500 text-yellow-500";
+    if (c.includes("HARD")) return "border-white text-white";
+    if (c.includes("INTERMEDIATE")) return "border-green-600 text-green-600";
+    if (c.includes("WET")) return "border-blue-600 text-blue-600";
+    return "border-zinc-700 text-zinc-400";
+  };
+
   const driversArray = useMemo(() => {
     if (!actualData) return [];
+
+    // Vuelta actual del líder
+    const leaderLap = Math.max(
+        ...Object.values(actualData)
+            .filter(d => d.lap_number)
+            .map(d => parseInt(d.lap_number) || 0),
+        0
+    );
+
     return Object.entries(actualData)
       .filter(([key]) => key !== 'session_key')
-      .map(([number, details]) => ({
-        number,
-        ...details,
-        pNum: parseInt(details.position) || 999 
-      }))
-      .sort((a, b) => a.pNum - b.pNum);
-  }, [actualData]);
+      .map(([number, details]) => {
+        const statusInfo = driverStatus.find(s => String(s.driver_number) === String(number));
+        const lapsCompletedInDB = statusInfo ? parseInt(statusInfo.number_of_laps) : 999;
+        
+        let displayPos = details.position;
+        let isOut = false;
 
-  // 3. Lógica de récords y sectores (MANTENIDA INTACTA)
+        if (statusInfo) {
+            if (statusInfo.dns) { isOut = true; displayPos = "DNS"; }
+            else if (statusInfo.dsq && lapsCompletedInDB >= 0 && leaderLap > lapsCompletedInDB) { 
+              isOut = true; 
+              displayPos = "DSQ"; 
+            }
+            else if (statusInfo.dnf && lapsCompletedInDB >= 0 && leaderLap > lapsCompletedInDB) {
+                isOut = true;
+                displayPos = "DNF";
+            }
+        }
+
+        return {
+          number,
+          ...details,
+          displayPos,
+          isOut,
+          pNum: isOut ? 1000 + (parseInt(details.position) || 50) : (parseInt(details.position) || 999)
+        };
+      })
+      .sort((a, b) => a.pNum - b.pNum);
+  }, [actualData, driverStatus]);
+
+  // Lógica de actualización de tiempos
   useEffect(() => {
     if (!actualData || Object.keys(actualData).length === 0) return;
     
     let updatedSession = { ...records.session };
     let updatedPersonal = { ...records.personal };
-    let updatedGaps = { ...records.lastGaps };
     let updatedDisplayedLaps = { ...displayedLaps };
     let changed = false;
+
+    const currentSimTime = new Date(raceData?.sim_time).getTime();
 
     Object.entries(actualData).forEach(([driverNum, data]) => {
       if (driverNum === 'session_key') return;
 
-      const currentSimTime = new Date(raceData.sim_time).getTime();
+      // Revelación de última vuelta basada en tiempo transcurrido
       const lapStartTime = new Date(data.date_start).getTime();
       const elapsedInLap = (currentSimTime - lapStartTime) / 1000;
-      
       const s1 = parseFloat(data.s1) || 0;
       const s2 = parseFloat(data.s2) || 0;
       const s3 = parseFloat(data.s3) || 0;
       const totalLapTime = s1 + s2 + s3;
 
-      if (elapsedInLap >= totalLapTime || !updatedDisplayedLaps[driverNum]) {
-        if (data.last_lap && data.last_lap !== "-") {
+      if (elapsedInLap >= totalLapTime && data.last_lap && data.last_lap !== "-") {
+        if (updatedDisplayedLaps[driverNum] !== data.last_lap) {
           updatedDisplayedLaps[driverNum] = data.last_lap;
           changed = true;
         }
-      }
-
-      if (data.gap && data.gap !== "-" && data.gap !== "") {
-        if (!updatedGaps[driverNum]) updatedGaps[driverNum] = {};
-        updatedGaps[driverNum].gap = data.gap;
-        changed = true;
-      }
-      if (data.interval && data.interval !== "-" && data.interval !== "") {
-        if (!updatedGaps[driverNum]) updatedGaps[driverNum] = {};
-        updatedGaps[driverNum].interval = data.interval;
-        changed = true;
       }
       
       if (!updatedPersonal[driverNum]) updatedPersonal[driverNum] = { s1: 999, s2: 999, s3: 999 };
@@ -105,10 +117,10 @@ export default function TablaCarrera({ raceData }) {
     });
 
     if (changed) {
-      setRecords({ session: updatedSession, personal: updatedPersonal, lastGaps: updatedGaps });
+      setRecords(prev => ({ ...prev, session: updatedSession, personal: updatedPersonal }));
       setDisplayedLaps(updatedDisplayedLaps);
     }
-  }, [actualData, raceData?.sim_time]);
+  }, [actualData, raceData?.sim_time]); // sim_time para revelar en tiempo real
 
   const formatRaceTime = (val) => {
     if (val === "LEADER") return "LEADER";
@@ -120,34 +132,62 @@ export default function TablaCarrera({ raceData }) {
   };
 
   const renderLastLap = (driver) => {
-    const currentLapNum = parseInt(driver.lap_number) || 0;
+    if (driver.isOut) return "-";
     const displayedValue = displayedLaps[driver.number];
-    
-    if (currentLapNum <= 1) {
-        const currentSimTime = new Date(raceData.sim_time).getTime();
-        const lapStartTime = new Date(driver.date_start).getTime();
-        const elapsedInLap = (currentSimTime - lapStartTime) / 1000;
-        const sTotal = (parseFloat(driver.s1)||0) + (parseFloat(driver.s2)||0) + (parseFloat(driver.s3)||0);
-        
-        if (elapsedInLap < sTotal) return <span className="animate-pulse text-gray-700">...</span>;
-    }
-    return formatRaceTime(displayedValue || "NO DISPONIBLE");
+    return (displayedValue && displayedValue !== "-") 
+      ? formatRaceTime(displayedValue) 
+      : <span className="animate-pulse text-gray-700">...</span>;
   };
 
   const renderSector = (driver, sectorValue, sectorNumber) => {
-    if (!sectorValue || sectorValue === "-" || sectorValue === 0) return "NO DISPONIBLE";
+    if (driver.isOut) return "-";
+
+    // En la vuelta de formación (lap 1) no hay sectores, mostramos esperando
+    const currentLap = parseInt(driver.lap_number) || 0;
+    if (currentLap < 1) {
+      return <span className="animate-pulse text-gray-700 text-[10px]">...</span>;
+    }
+
+    // Si no hay dato en vueltas normales, es que no está disponible
+    if (!sectorValue || sectorValue === "-" || sectorValue === 0) {
+      return <span className="text-zinc-600 text-[10px] font-bold">N/D</span>;
+    }
+
     const currentSimTime = new Date(raceData?.sim_time).getTime();
     const lapStartTime = new Date(driver.date_start).getTime();
     const elapsedInLap = (currentSimTime - lapStartTime) / 1000;
     const val = parseFloat(sectorValue);
-    
+
+    const s1 = parseFloat(driver.s1);
+    const s2 = parseFloat(driver.s2);
+    const s1Valid = s1 > 0;
+    const s2Valid = s2 > 0;
+
     let timeToReveal = 0;
-    if (sectorNumber === 1) timeToReveal = val;
-    else if (sectorNumber === 2) timeToReveal = (parseFloat(driver.s1) || 0) + val;
-    else if (sectorNumber === 3) timeToReveal = (parseFloat(driver.s1) || 0) + (parseFloat(driver.s2) || 0) + val;
-    
-    if (elapsedInLap < timeToReveal) return <span className="animate-pulse text-gray-700 text-[10px]">...</span>;
-    
+    if (sectorNumber === 1) {
+      timeToReveal = val;
+    } else if (sectorNumber === 2) {
+      // Si no hay S1, esperamos al final de la vuelta completa
+      if (!s1Valid) {
+        const s3 = parseFloat(driver.s3) || 0;
+        timeToReveal = val + s3;
+      } else {
+        timeToReveal = s1 + val;
+      }
+    } else if (sectorNumber === 3) {
+      // Si falta S1 o S2, esperamos al final de la vuelta
+      if (!s1Valid || !s2Valid) {
+        timeToReveal = val + 999;
+      } else {
+        timeToReveal = s1 + s2 + val;
+      }
+    }
+
+    // Dato existe pero aún no toca revelarlo
+    if (elapsedInLap < timeToReveal) {
+      return <span className="animate-pulse text-gray-700 text-[10px]">...</span>;
+    }
+
     const sKey = `s${sectorNumber}`;
     let colorClass = "text-yellow-400";
     if (val <= records.session[sKey]) colorClass = "text-purple-500 font-bold";
@@ -159,7 +199,6 @@ export default function TablaCarrera({ raceData }) {
 
   return (
     <div className="w-full">
-      <LeyendaColores />
       <div className="w-full shadow-2xl bg-black border-danger border-2 rounded-[15px] overflow-hidden">
         <Table className="w-full table-fixed border-collapse">
           <TableHeader>
@@ -171,41 +210,55 @@ export default function TablaCarrera({ raceData }) {
           </TableHeader>
           <TableBody>
             {driversArray.map((driver) => {
-               const isLeader = driver.pNum === 1;
-               const rawGap = (driver.gap && driver.gap !== "-") ? driver.gap : (records.lastGaps[driver.number]?.gap || "NO DISPONIBLE");
-               const rawInterval = (driver.interval && driver.interval !== "-") ? driver.interval : (records.lastGaps[driver.number]?.interval || "NO DISPONIBLE");
+               const isLeader = driver.displayPos === "1" || driver.displayPos === 1;
+               const loadingDots = <span className="animate-pulse text-gray-700">...</span>;
+               
                return (
-                <TableRow key={driver.number} className="bg-black text-white border-zinc-800 hover:bg-zinc-900 transition-colors h-11">
-                  <TableCell className="text-center font-bold text-xl italic p-0">{driver.position}</TableCell>
+                <TableRow 
+                  key={driver.number} 
+                  className={`bg-black text-white border-zinc-800 transition-colors h-11 ${
+                    driver.isOut ? "opacity-40 grayscale-[0.8]" : "hover:bg-zinc-900"
+                  }`}
+                >
+                  <TableCell className={`text-center font-bold text-xl italic p-0 ${driver.isOut ? "text-red-600" : ""}`}>
+                    {driver.displayPos}
+                  </TableCell>
+
                   <TableCell className="text-center p-0">
-                    <div className="flex justify-center w-full">
-                      <div className="py-1 rounded-sm font-black text-[13px] uppercase shadow-sm text-center" 
-                           style={{ backgroundColor: `#${(driver.team_color || '444').replace('#','')}`, width: '65px' }}>
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="py-0.5 rounded-sm font-black text-[13px] uppercase shadow-sm text-center" 
+                           style={{ 
+                             backgroundColor: `#${(driver.team_color || '444').replace('#','')}`, 
+                             width: '65px',
+                             filter: driver.isOut ? 'brightness(0.5)' : 'none'
+                           }}>
                         {driver.acronym}
                       </div>
                     </div>
                   </TableCell>
+
                   <TableCell className="text-center font-mono text-sm p-0">
                     <span className={isLeader ? "text-yellow-500 font-bold" : "text-white"}>
-                      {isLeader ? "LEADER" : formatRaceTime(rawGap)}
+                      {driver.isOut ? "-" : (isLeader ? "LEADER" : (driver.gap || loadingDots))}
                     </span>
                   </TableCell>
+
                   <TableCell className="text-center font-mono text-sm text-white p-0">
                     <span className={isLeader ? "text-yellow-500 font-bold" : "text-white"}>
-                      {isLeader ? "LEADER" : formatRaceTime(rawInterval)}
+                      {driver.isOut ? "-" : (isLeader ? "LEADER" : (driver.interval || loadingDots))}
                     </span>
                   </TableCell>
+
                   <TableCell className="text-center font-mono text-[14px] p-0">{renderSector(driver, driver.s1, 1)}</TableCell>
                   <TableCell className="text-center font-mono text-[14px] p-0">{renderSector(driver, driver.s2, 2)}</TableCell>
                   <TableCell className="text-center font-mono text-[14px] p-0">{renderSector(driver, driver.s3, 3)}</TableCell>
                   <TableCell className="text-center font-mono font-bold text-white text-[15px] p-0">{renderLastLap(driver)}</TableCell>
+
                   <TableCell className="text-center p-0">
                      <div className="flex justify-center items-center">
-                        <span className={`text-[14px] font-black w-7 h-7 flex items-center justify-center rounded-full border-[3px] ${
-                          driver.compound?.toLowerCase().includes('soft') ? 'border-red-600 text-red-600' : 
-                          driver.compound?.toLowerCase().includes('medium') ? 'border-yellow-500 text-yellow-500' :
-                          driver.compound?.toLowerCase().includes('hard') ? 'border-zinc-300 text-zinc-300' : 'border-gray-500 text-gray-500'
-                        }`}>{driver.compound?.charAt(0).toUpperCase() || '-'}</span>
+                        <span className={`text-[14px] font-black w-7 h-7 flex items-center justify-center rounded-full border-[3px] ${getTyreColor(driver.compound)}`}>
+                          {driver.compound?.charAt(0).toUpperCase() || '-'}
+                        </span>
                      </div>
                   </TableCell>
                 </TableRow>
