@@ -61,6 +61,10 @@ export default function CircuitoInteractivo() {
   }, [raceData]);
 
   const handleStartCircuit = (driverId, eventData) => {
+    setRaceData({});
+    setTotalLaps(0);
+    setDriverStatus([]);
+    
     setSelectedDriver(driverId);
     if (eventData) {
       setEventInfo({ name: eventData.countryName, code: eventData.countryCode });
@@ -157,7 +161,8 @@ export default function CircuitoInteractivo() {
                  <h4 className="text-white mb-4 text-uppercase fw-bold" style={{ fontSize: '1.1rem', letterSpacing: '1px' }}>
                    Clasificación y Tiempos
                  </h4>
-                 <TablaCarrera 
+                 <TablaCarrera
+                  key={refreshTrigger} 
                   raceData={raceData} 
                   driverStatus={driverStatus} 
                  />
