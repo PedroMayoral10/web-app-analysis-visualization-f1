@@ -147,13 +147,13 @@ export default function Circuito({ active, trigger, followedDriver, drivers, set
 
   return (
     <div className="card h-100 w-100 position-relative d-flex justify-content-center align-items-center bg-black border-danger shadow" 
-          style={{ borderWidth: '2px', borderRadius: '15px', minHeight: '600px' }}>
+          style={{ borderWidth: '2px', borderRadius: '15px', height: '800px' }}>
       
       {!active && <div className="text-secondary z-1">Selecciona una sesión para comenzar</div>}
       {active && loadingMap && trackPoints.length === 0 && <div className="spinner-border text-danger z-1" role="status"></div>}
 
       {active && trackPoints.length > 0 && (
-        <div style={{ position: 'relative', width: '100%', paddingTop: '75%' }}> 
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}> 
           <svg viewBox={`0 0 ${svgSize} ${svgSize}`} preserveAspectRatio="xMidYMid meet" 
                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'block' }}>
             

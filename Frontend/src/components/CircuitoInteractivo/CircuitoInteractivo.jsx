@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Circuito from './Circuito';
 import SelectorSesion from './SeleccionSesion';
 import TablaCarrera from './TablaCarrera';
+import TablaRaceControl from './TablaRaceControl';
 import { URL_API_BACKEND } from "../../config";
 
 export default function CircuitoInteractivo() {
@@ -24,36 +25,26 @@ export default function CircuitoInteractivo() {
   useEffect(() => {
     const fetchSessionData = async () => {
       const session_key = raceData?.session_key;
-
-      // Verificamos que la simulación esté activa y tengamos la key
       if (simulationActive && session_key) {
         try {
-          // Total de vueltas
           const resLaps = await fetch(`${URL_API_BACKEND}/sessions_results/openf1/total_laps/${session_key}`);
           const dataLaps = await resLaps.json();
           setTotalLaps(dataLaps.total_laps || 0);
 
-          // Estado de los pilotos (DNF/DNS/DSQ)
           const resStatus = await fetch(`${URL_API_BACKEND}/sessions_results/openf1/results/${session_key}`);
           const dataStatus = await resStatus.json();
           
-          // Solo actualizamos si realmente hay datos, nunca vaciamos
           if (Array.isArray(dataStatus) && dataStatus.length > 0) {
             setDriverStatus(dataStatus);
           }
-
         } catch (error) {
           console.error("Error al obtener datos de la sesión:", error);
-          // No tocamos driverStatus si hay error
         }
       }
     };
-
     fetchSessionData();
   }, [simulationActive, raceData?.session_key]);
- 
 
-  // Cálculo de la vuelta actual para el header global
   const currentLap = useMemo(() => {
     const pilotos = Object.values(raceData?.snapshot || raceData?.race_table || {});
     const lider = pilotos.find(p => parseInt(p.position) === 1);
@@ -64,7 +55,6 @@ export default function CircuitoInteractivo() {
     setRaceData({});
     setTotalLaps(0);
     setDriverStatus([]);
-    
     setSelectedDriver(driverId);
     if (eventData) {
       setEventInfo({ name: eventData.countryName, code: eventData.countryCode });
@@ -96,12 +86,7 @@ export default function CircuitoInteractivo() {
                 </div>
                 <span 
                   className={`fi fi-${f1CountryMapper[eventInfo.code?.toUpperCase()] || 'un'}`} 
-                  style={{ 
-                    width: '38px', 
-                    height: '28px', 
-                    borderRadius: '3px',
-                    display: 'inline-block'
-                  }}
+                  style={{ width: '38px', height: '28px', borderRadius: '3px', display: 'inline-block' }}
                 ></span>
               </div>
             )}
@@ -109,14 +94,12 @@ export default function CircuitoInteractivo() {
         </div>
       </div>
 
-      {/* CONTENEDOR PRINCIPAL */}
       <div className="p-4 w-100" style={{ minHeight: '100vh', display: 'block' }}>
         <div className="w-100" style={{ maxWidth: '1600px', margin: '0 auto' }}>
           <div className="container-fluid py-3">
             <div className="row">
-              <div className="col-lg-9 mb-3 mb-lg-0">
-                {/* Contenedor del circuito */}
-                <div style={{ minHeight: '550px', width: '100%' }}>
+              <div className="col-lg-9">
+                <div className="h-100" style={{ minHeight: '700px', width: '100%' }}>
                   <Circuito 
                     active={simulationActive} 
                     trigger={refreshTrigger} 
@@ -129,42 +112,63 @@ export default function CircuitoInteractivo() {
               </div>
 
               <div className="col-lg-3">
-                <div className="card h-100 bg-black border-danger shadow" style={{ borderWidth: '2px', borderRadius: '15px' }}>
+                <div className="h-100 bg-black border-danger" style={{ borderWidth: '2px', borderRadius: '15px' }}>
                   <div className="card-body p-4 d-flex flex-column">
-                    <h5 className="text-white mb-4 fw-bold text-uppercase border-bottom border-secondary pb-2">
+                    <h6 className="text-white mb-3 fw-bold text-uppercase ">
                       Configuración de carrera
-                    </h5>
-
-                    <div className="mb-4">
-                      {/* Pasamos la función actualizada al selector */}
-                      <SelectorSesion 
+                    </h6>
+                    <SelectorSesion 
                         onStartSimulation={handleStartCircuit}
                         setExternalDrivers={setDriversData}
-                      />
-                    </div>
-
-                    <div className="mt-auto text-white-50">
-                      <small>Estado del sistema</small>
-                      <div className="d-flex align-items-center gap-2 mt-1 text-success">
-                        <div className="spinner-grow spinner-grow-sm" role="status"></div>
-                        <span>Sistema Online</span>
-                      </div>
-                    </div>
+                    />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* SECCIÓN DE TABLA */}
-            <div className="row mt-4 mb-5 pt-4 border-top border-secondary border-opacity-25">
+            <div className="row mt-4">
               <div className="col-12">
-                 <h4 className="text-white mb-4 text-uppercase fw-bold" style={{ fontSize: '1.1rem', letterSpacing: '1px' }}>
-                   Clasificación y Tiempos
-                 </h4>
+                <div className="d-flex align-items-center justify-content-between">
+                  <h5 className="text-white mb-4 text-uppercase fw-bold" style={{ fontSize: '1.1rem', letterSpacing: '1px' }}>
+                    Race control
+                  </h5>
+                </div>
+                <div className="border-danger bg-black border border-secondary p-3 shadow-sm" style={{ borderRadius: '15px' }}>
+                  <TablaRaceControl 
+                    session_key={raceData?.session_key} 
+                    sim_time={raceData?.sim_time} 
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="row mt-4">
+              <div className="col-12">
+                 <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap">
+                    <h5 className="text-white mb-0 text-uppercase fw-bold" style={{ fontSize: '1.1rem', letterSpacing: '1px' }}>
+                      Clasificación y Tiempos
+                    </h5>
+                    <div className="d-flex align-items-center gap-2">
+                      <div className="d-flex align-items-center">
+                        <span style={{ width: '10px', height: '10px', backgroundColor: '#a855f7', borderRadius: '100%', marginRight: '6px'}}></span>
+                        <small className="text-white">Récord Sector</small>
+                      </div>
+                      
+                      <div className="d-flex align-items-center">
+                        <span style={{ width: '10px', height: '10px', backgroundColor: '#4ade80', borderRadius: '100%', marginRight: '6px'}}></span>
+                        <small className="text-white">Mejora Personal</small>
+                      </div>
+
+                      <div className="d-flex align-items-center">
+                        <span style={{ width: '10px', height: '10px', backgroundColor: '#facc15', borderRadius: '100%', marginRight: '6px'}}></span>
+                        <small className="text-white">Sin Mejora</small>
+                      </div>
+                    </div>
+                  </div>
                  <TablaCarrera
-                  key={refreshTrigger} 
-                  raceData={raceData} 
-                  driverStatus={driverStatus} 
+                   key={refreshTrigger} 
+                   raceData={raceData} 
+                   driverStatus={driverStatus} 
                  />
               </div>
             </div>

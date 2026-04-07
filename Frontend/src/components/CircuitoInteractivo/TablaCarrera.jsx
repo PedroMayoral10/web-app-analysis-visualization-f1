@@ -195,77 +195,83 @@ export default function TablaCarrera({ raceData, driverStatus = [], totalLaps = 
     return <span className={colorClass}>{val.toFixed(3)}</span>;
   };
 
-  if (driversArray.length === 0) return <div className="p-8 text-center text-gray-400 italic">Esperando telemetría...</div>;
-
   return (
     <div className="w-full">
       <div className="w-full shadow-2xl bg-black border-danger border-2 rounded-[15px] overflow-hidden">
-        <Table className="w-full table-fixed border-collapse">
-          <TableHeader>
-            <TableRow className="bg-black border-b border-danger hover:bg-black h-9">
-              {["POS", "PILOTO", "GAP", "INTERVAL", "S1", "S2", "S3", "ÚLTIMA VUELTA", "NEUMÁTICO"].map((head) => (
-                <TableHead key={head} className="text-white text-center font-bold px-0 text-[12px] uppercase tracking-wider">{head}</TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {driversArray.map((driver) => {
-               const isLeader = driver.displayPos === "1" || driver.displayPos === 1;
-               const loadingDots = <span className="animate-pulse text-gray-700">...</span>;
-               
-               return (
-                <TableRow 
-                  key={driver.number} 
-                  className={`bg-black text-white border-zinc-800 transition-colors h-11 ${
-                    driver.isOut ? "opacity-40 grayscale-[0.8]" : "hover:bg-zinc-900"
-                  }`}
-                >
-                  <TableCell className={`text-center font-bold text-xl italic p-0 ${driver.isOut ? "text-red-600" : ""}`}>
-                    {driver.displayPos}
-                  </TableCell>
 
-                  <TableCell className="text-center p-0">
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="py-0.5 rounded-sm font-black text-[13px] uppercase shadow-sm text-center" 
-                           style={{ 
-                             backgroundColor: `#${(driver.team_color || '444').replace('#','')}`, 
-                             width: '65px',
-                             filter: driver.isOut ? 'brightness(0.5)' : 'none'
-                           }}>
-                        {driver.acronym}
+        {driversArray.length === 0 ? (
+          <div className="d-flex align-items-center justify-content-center" style={{ minHeight: '400px' }}>
+            <p className="text-secondary fst-italic m-0">Esperando sesión...</p>
+          </div>
+        ) : (
+          <Table className="w-full table-fixed border-collapse">
+            <TableHeader>
+              <TableRow className="bg-black border-b border-danger hover:bg-black h-9">
+                {["POS", "PILOTO", "GAP", "INTERVAL", "S1", "S2", "S3", "ÚLTIMA VUELTA", "NEUMÁTICO"].map((head) => (
+                  <TableHead key={head} className="text-white text-center font-bold px-0 text-[12px] uppercase tracking-wider">{head}</TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {driversArray.map((driver) => {
+                 const isLeader = driver.displayPos === "1" || driver.displayPos === 1;
+                 const loadingDots = <span className="animate-pulse text-gray-700">...</span>;
+                 
+                 return (
+                  <TableRow 
+                    key={driver.number} 
+                    className={`bg-black text-white border-zinc-800 transition-colors h-11 ${
+                      driver.isOut ? "opacity-40 grayscale-[0.8]" : "hover:bg-zinc-900"
+                    }`}
+                  >
+                    <TableCell className={`text-center font-bold text-xl italic p-0 ${driver.isOut ? "text-red-600" : ""}`}>
+                      {driver.displayPos}
+                    </TableCell>
+
+                    <TableCell className="text-center p-0">
+                      <div className="flex flex-col items-center justify-center">
+                        <div className="py-0.5 rounded-sm font-black text-[13px] uppercase shadow-sm text-center" 
+                             style={{ 
+                               backgroundColor: `#${(driver.team_color || '444').replace('#','')}`, 
+                               width: '65px',
+                               filter: driver.isOut ? 'brightness(0.5)' : 'none'
+                             }}>
+                          {driver.acronym}
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
+                    </TableCell>
 
-                  <TableCell className="text-center font-mono text-sm p-0">
-                    <span className={isLeader ? "text-yellow-500 font-bold" : "text-white"}>
-                      {driver.isOut ? "-" : (isLeader ? "LEADER" : (driver.gap || loadingDots))}
-                    </span>
-                  </TableCell>
+                    <TableCell className="text-center font-mono text-sm p-0">
+                      <span className={isLeader ? "text-yellow-500 font-bold" : "text-white"}>
+                        {driver.isOut ? "-" : (isLeader ? "LEADER" : (driver.gap || loadingDots))}
+                      </span>
+                    </TableCell>
 
-                  <TableCell className="text-center font-mono text-sm text-white p-0">
-                    <span className={isLeader ? "text-yellow-500 font-bold" : "text-white"}>
-                      {driver.isOut ? "-" : (isLeader ? "LEADER" : (driver.interval || loadingDots))}
-                    </span>
-                  </TableCell>
+                    <TableCell className="text-center font-mono text-sm text-white p-0">
+                      <span className={isLeader ? "text-yellow-500 font-bold" : "text-white"}>
+                        {driver.isOut ? "-" : (isLeader ? "LEADER" : (driver.interval || loadingDots))}
+                      </span>
+                    </TableCell>
 
-                  <TableCell className="text-center font-mono text-[14px] p-0">{renderSector(driver, driver.s1, 1)}</TableCell>
-                  <TableCell className="text-center font-mono text-[14px] p-0">{renderSector(driver, driver.s2, 2)}</TableCell>
-                  <TableCell className="text-center font-mono text-[14px] p-0">{renderSector(driver, driver.s3, 3)}</TableCell>
-                  <TableCell className="text-center font-mono font-bold text-white text-[15px] p-0">{renderLastLap(driver)}</TableCell>
+                    <TableCell className="text-center font-mono text-[14px] p-0">{renderSector(driver, driver.s1, 1)}</TableCell>
+                    <TableCell className="text-center font-mono text-[14px] p-0">{renderSector(driver, driver.s2, 2)}</TableCell>
+                    <TableCell className="text-center font-mono text-[14px] p-0">{renderSector(driver, driver.s3, 3)}</TableCell>
+                    <TableCell className="text-center font-mono font-bold text-white text-[15px] p-0">{renderLastLap(driver)}</TableCell>
 
-                  <TableCell className="text-center p-0">
-                     <div className="flex justify-center items-center">
-                        <span className={`text-[14px] font-black w-7 h-7 flex items-center justify-center rounded-full border-[3px] ${getTyreColor(driver.compound)}`}>
-                          {driver.compound?.charAt(0).toUpperCase() || '-'}
-                        </span>
-                     </div>
-                  </TableCell>
-                </TableRow>
-               );
-            })}
-          </TableBody>
-        </Table>
+                    <TableCell className="text-center p-0">
+                       <div className="flex justify-center items-center">
+                          <span className={`text-[14px] font-black w-7 h-7 flex items-center justify-center rounded-full border-[3px] ${getTyreColor(driver.compound)}`}>
+                            {driver.compound?.charAt(0).toUpperCase() || '-'}
+                          </span>
+                       </div>
+                    </TableCell>
+                  </TableRow>
+                 );
+              })}
+            </TableBody>
+          </Table>
+        )}
+
       </div>
     </div>
   );

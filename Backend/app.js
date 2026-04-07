@@ -12,6 +12,7 @@ var racesRouter = require('./routes/races'); // importar el enrutador de races d
 var authRouter = require('./routes/user'); // importar el enrutador de user del archivo user.js del directorio routes
 var interactiveFavsRouter = require('./routes/interactive_favs'); // importar el enrutador de interactive_favs del archivo interactive_favs.js del directorio routes
 var sessionsResultsRouter = require('./routes/sessions_results'); // importar el enrutador de sessions_results del archivo sessions_results.js del directorio routes
+var raceControlRouter = require('./routes/race_control'); // importar el enrutador de race_control del archivo race_control.js del directorio routes
 
 var app = express(); 
 
@@ -29,6 +30,7 @@ app.use('/races', racesRouter); // Usar el enrutador de races para las rutas que
 app.use('/user', authRouter); // Usar el enrutador de user para las rutas que comienzan con /user
 app.use('/interactive_favs', interactiveFavsRouter); // Usar el enrutador de interactive_favs para las rutas que comienzan con /interactive_favs
 app.use('/sessions_results', sessionsResultsRouter); // Usar el enrutador de sessions_results para las rutas que comienzan con /sessions_results
+app.use('/race_control', raceControlRouter); // Usar el enrutador de race_control para las rutas que comienzan con /race_control
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
