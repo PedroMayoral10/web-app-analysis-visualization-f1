@@ -4,7 +4,7 @@ import { URL_API_BACKEND } from "../../config";
 const flagColorMapper = {
     "GREEN": "#00d21e",
     "YELLOW": "#ffeb00",
-    "DOUBLE YELLOW": "#ffeb00", 
+    "DOUBLE YELLOW": "#ffeb00",
     "DOUBLE YELLOW LIGHT": "#ffeb00",
     "DOUBLE YELLOW DARK": "#c49316",
     "RED": "#ff1801",
@@ -12,6 +12,8 @@ const flagColorMapper = {
     "CHEQUERED": "#ffffff",
     "BLUE": "#00a2ff",
     "BLACK AND WHITE": "#ffffff",
+    "B&W_WHITE": "#ffffff",
+    "B&W_BLACK": "#000000",
 };
 
 export default function TablaRaceControl({ session_key, sim_time }) {
@@ -37,8 +39,8 @@ export default function TablaRaceControl({ session_key, sim_time }) {
 
         if (sim_time && session_key) {
             const simTimeActual = new Date(sim_time);
-            const ultimoMsgDate = raceMessages.length > 0 
-                ? new Date(raceMessages[raceMessages.length - 1].date) 
+            const ultimoMsgDate = raceMessages.length > 0
+                ? new Date(raceMessages[raceMessages.length - 1].date)
                 : null;
 
             // Lógica de salto atrás
@@ -68,11 +70,11 @@ export default function TablaRaceControl({ session_key, sim_time }) {
     }, [sim_time, session_key]);
 
     return (
-        <div 
+        <div
             ref={scrollRef}
-            className="pr-2 custom-scrollbar" 
-            style={{ 
-                height: '230px', 
+            className="pr-2 custom-scrollbar"
+            style={{
+                height: '230px',
                 overflowY: 'auto',
                 backgroundColor: '#000000',
                 borderRadius: '8px',
@@ -107,15 +109,18 @@ export default function TablaRaceControl({ session_key, sim_time }) {
                                 </div>
                                 <p className="text-white m-0 font-monospace d-flex align-items-center gap-2" style={{ fontSize: '0.9rem', lineHeight: '1.4' }}>
                                     {msg.flag && (
-                                        <div style={{ 
-                                            width: '20px', 
-                                            height: '14px', 
-                                            background: msg.flag === "DOUBLE YELLOW" 
-                                                ? `linear-gradient(135deg, ${flagColorMapper["DOUBLE YELLOW LIGHT"]} 50%, ${flagColorMapper["DOUBLE YELLOW DARK"]} 50%)`
-                                                : flagColor, 
-                                            borderRadius: '2px', 
-                                            flexShrink: 0, 
-                                            border: '1px solid rgba(255,255,255,0.2)' 
+                                        <div style={{
+                                            width: '20px',
+                                            height: '14px',
+                                            background:
+                                                msg.flag === "DOUBLE YELLOW"
+                                                    ? `linear-gradient(135deg, ${flagColorMapper["DOUBLE YELLOW LIGHT"]} 50%, ${flagColorMapper["DOUBLE YELLOW DARK"]} 50%)`
+                                                    : msg.flag === "BLACK AND WHITE"
+                                                        ? `linear-gradient(135deg, #ffffff 50%, #000000 50%)`
+                                                        : flagColor,
+                                            borderRadius: '2px',
+                                            flexShrink: 0,
+                                            border: '1px solid rgba(255,255,255,0.2)'
                                         }} />
                                     )}
                                     {msg.message}

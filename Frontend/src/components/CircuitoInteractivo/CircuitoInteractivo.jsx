@@ -16,9 +16,9 @@ export default function CircuitoInteractivo() {
   const [driverStatus, setDriverStatus] = useState([]);
 
   const f1CountryMapper = {
-    "ESP": "es", "BRN": "bh", "KSA": "sa", "AUS": "au", "AZE": "az", 
-    "MON": "mc", "CAN": "ca", "AUT": "at", "GBR": "gb", "HUN": "hu", 
-    "BEL": "be", "NED": "nl", "ITA": "it", "SGP": "sg", "JPN": "jp", 
+    "ESP": "es", "BRN": "bh", "KSA": "sa", "AUS": "au", "AZE": "az",
+    "MON": "mc", "CAN": "ca", "AUT": "at", "GBR": "gb", "HUN": "hu",
+    "BEL": "be", "NED": "nl", "ITA": "it", "SGP": "sg", "JPN": "jp",
     "QAT": "qa", "USA": "us", "MEX": "mx", "BRA": "br", "UAE": "ae", "CHN": "cn"
   };
 
@@ -33,7 +33,7 @@ export default function CircuitoInteractivo() {
 
           const resStatus = await fetch(`${URL_API_BACKEND}/sessions_results/openf1/results/${session_key}`);
           const dataStatus = await resStatus.json();
-          
+
           if (Array.isArray(dataStatus) && dataStatus.length > 0) {
             setDriverStatus(dataStatus);
           }
@@ -65,9 +65,8 @@ export default function CircuitoInteractivo() {
 
   return (
     <>
-      {/* HEADER: bg-zinc-950 para que se fusione con el fondo de la App */}
       <div className="sticky-top bg-zinc-900 py-2 w-100 border-bottom border-danger shadow-none" style={{ top: 0, zIndex: 1050, borderBottomWidth: '2px' }}>
-        <div className="px-4"> 
+        <div className="px-4">
           <div className="d-flex justify-content-between align-items-center">
             <div className="d-flex align-items-baseline gap-2">
               <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em]">Lap</span>
@@ -85,8 +84,8 @@ export default function CircuitoInteractivo() {
                     {eventInfo.name}
                   </div>
                 </div>
-                <span 
-                  className={`fi fi-${f1CountryMapper[eventInfo.code?.toUpperCase()] || 'un'}`} 
+                <span
+                  className={`fi fi-${f1CountryMapper[eventInfo.code?.toUpperCase()] || 'un'}`}
                   style={{ width: '38px', height: '28px', borderRadius: '3px', display: 'inline-block' }}
                 ></span>
               </div>
@@ -95,18 +94,17 @@ export default function CircuitoInteractivo() {
         </div>
       </div>
 
-      {/* CUERPO: CORREGIDO className para aplicar el fondo Zinc */}
       <div className="p-4 w-100 bg-zinc-900" style={{ minHeight: '100vh', display: 'block' }}>
         <div className="w-100" style={{ maxWidth: '1600px', margin: '0 auto' }}>
           <div className="container-fluid py-3 bg-transparent">
             <div className="row">
               <div className="col-lg-9">
                 <div className="h-100" style={{ minHeight: '700px', width: '100%' }}>
-                  <Circuito 
-                    active={simulationActive} 
-                    trigger={refreshTrigger} 
+                  <Circuito
+                    active={simulationActive}
+                    trigger={refreshTrigger}
                     followedDriver={selectedDriver}
-                    drivers={driversData} 
+                    drivers={driversData}
                     setRaceData={setRaceData}
                     driverStatus={driverStatus}
                   />
@@ -114,15 +112,14 @@ export default function CircuitoInteractivo() {
               </div>
 
               <div className="col-lg-3">
-                {/* PANEL CONFIGURACIÓN: bg-black puro */}
                 <div className="h-100 bg-black border border-danger shadow-none" style={{ borderWidth: '2px', borderRadius: '15px' }}>
                   <div className="card-body p-4 d-flex flex-column">
                     <h6 className="text-white mb-3 fw-bold text-uppercase ">
                       Configuración de carrera
                     </h6>
-                    <SelectorSesion 
-                        onStartSimulation={handleStartCircuit}
-                        setExternalDrivers={setDriversData}
+                    <SelectorSesion
+                      onStartSimulation={handleStartCircuit}
+                      setExternalDrivers={setDriversData}
                     />
                   </div>
                 </div>
@@ -136,11 +133,10 @@ export default function CircuitoInteractivo() {
                     Race control
                   </h5>
                 </div>
-                {/* RACE CONTROL: bg-black puro y sombra eliminada */}
                 <div className="bg-black border border-danger p-3 shadow-none" style={{ borderRadius: '15px' }}>
-                  <TablaRaceControl 
-                    session_key={raceData?.session_key} 
-                    sim_time={raceData?.sim_time} 
+                  <TablaRaceControl
+                    session_key={raceData?.session_key}
+                    sim_time={raceData?.sim_time}
                   />
                 </div>
               </div>
@@ -148,30 +144,30 @@ export default function CircuitoInteractivo() {
 
             <div className="row mt-4 pb-5">
               <div className="col-12">
-                 <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap">
-                    <h5 className="text-white mb-0 text-uppercase fw-bold" style={{ fontSize: '1.1rem', letterSpacing: '1px' }}>
-                      Clasificación y Tiempos
-                    </h5>
-                    <div className="d-flex align-items-center gap-3">
-                      <div className="d-flex align-items-center">
-                        <span style={{ width: '10px', height: '10px', backgroundColor: '#a855f7', borderRadius: '100%', marginRight: '8px'}}></span>
-                        <small className="text-zinc-400 uppercase font-bold text-[10px]">Récord Sector</small>
-                      </div>
-                      <div className="d-flex align-items-center">
-                        <span style={{ width: '10px', height: '10px', backgroundColor: '#4ade80', borderRadius: '100%', marginRight: '8px'}}></span>
-                        <small className="text-zinc-400 uppercase font-bold text-[10px]">Mejora Personal</small>
-                      </div>
-                      <div className="d-flex align-items-center">
-                        <span style={{ width: '10px', height: '10px', backgroundColor: '#facc15', borderRadius: '100%', marginRight: '8px'}}></span>
-                        <small className="text-zinc-400 uppercase font-bold text-[10px]">Sin Mejora</small>
-                      </div>
+                <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap">
+                  <h5 className="text-white mb-0 text-uppercase fw-bold" style={{ fontSize: '1.1rem', letterSpacing: '1px' }}>
+                    Clasificación y Tiempos
+                  </h5>
+                  <div className="d-flex align-items-center gap-3">
+                    <div className="d-flex align-items-center">
+                      <span style={{ width: '10px', height: '10px', backgroundColor: '#a855f7', borderRadius: '100%', marginRight: '8px' }}></span>
+                      <small className="text-zinc-400 uppercase font-bold text-[10px]">Récord Sector</small>
+                    </div>
+                    <div className="d-flex align-items-center">
+                      <span style={{ width: '10px', height: '10px', backgroundColor: '#4ade80', borderRadius: '100%', marginRight: '8px' }}></span>
+                      <small className="text-zinc-400 uppercase font-bold text-[10px]">Mejora Personal</small>
+                    </div>
+                    <div className="d-flex align-items-center">
+                      <span style={{ width: '10px', height: '10px', backgroundColor: '#facc15', borderRadius: '100%', marginRight: '8px' }}></span>
+                      <small className="text-zinc-400 uppercase font-bold text-[10px]">Sin Mejora</small>
                     </div>
                   </div>
-                  <TablaCarrera
-                    key={refreshTrigger} 
-                    raceData={raceData} 
-                    driverStatus={driverStatus} 
-                  />
+                </div>
+                <TablaCarrera
+                  key={refreshTrigger}
+                  raceData={raceData}
+                  driverStatus={driverStatus}
+                />
               </div>
             </div>
           </div>

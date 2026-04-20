@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 const { connectToDB_OpenF1 } = require('../db_mongo');
 
-// Obtener incidentes de Race Control por session_key desde MongoDB
+// Obtener toda la información que comunica control de carrera por session_key 
 router.get('/openf1/race_control/:session_key', async function(req, res) {
     
     const { session_key } = req.params;
@@ -10,15 +10,13 @@ router.get('/openf1/race_control/:session_key', async function(req, res) {
 
     try {
         const db = await connectToDB_OpenF1();
-        
-        // Filtro base: sesión y tiempo actual de simulación
         let query = { 
             session_key: parseInt(session_key),
             date: { $lte: new Date(sim_time) } 
         };
 
-        // LÓGICA INCREMENTAL: Si el frente nos da la fecha de su último mensaje,
-        // solo buscamos lo que sea estrictamente posterior (>).
+        // Si tenemos la fecha del último mensaje,
+        // solo buscamos lo que sea estrictamente posterior a ese.
         if (last_date && last_date !== "null" && last_date !== "undefined") {
             query.date.$gt = new Date(last_date);
         }

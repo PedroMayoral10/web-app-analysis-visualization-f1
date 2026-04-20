@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 const { connectToDB_OpenF1 } = require('../db_mongo');
 
-// Obtener información de una sesión específica OpenF1 (solo de 2023 a 2025). Por ahora sin utilizar ---
+// Obtener información de una sesión específica OpenF1 (solo de 2023 a 2025)
 
 router.get('/openf1/:session_key', async function(req, res) {
     const session_key = req.params.session_key;

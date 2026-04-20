@@ -142,7 +142,7 @@ function detenerSimulacion() {
     cursorTiempoSimulacion = null;
 }
 
-// --- RUTAS ---
+// Comienzo de la simulación con una sesión específica
 
 router.post('/start', async (req, res) => {
     const { session_key: nuevaSession } = req.body;
@@ -180,10 +180,14 @@ router.post('/start', async (req, res) => {
     }
 });
 
-router.post('/stop', (req, res) => {
+// Para detener la simulación y limpiar el estado de las variables globales
+
+router.post('/stop', (res) => {
     detenerSimulacion();
     res.json({ message: "Simulación detenida" });
 });
+
+// Obtenemos los datos de trazado de un piloto para poder pintar el circuito
 
 router.get('/track-data', async (req, res) => {
 
@@ -221,7 +225,7 @@ router.get('/track-data', async (req, res) => {
     }
 });
 
-router.get("/current", (req, res) => {
+router.get("/current", (res) => {
 
     // Elimina los 304 para que el cliente siempre reciba todo y no le devuelvan respuestas que no son actualizadas
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');

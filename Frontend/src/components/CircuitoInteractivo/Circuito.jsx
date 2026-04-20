@@ -7,7 +7,7 @@ const mapCoordinates = (val, min, max, size) => {
 
 export default function Circuito({ active, trigger, followedDriver, drivers, setRaceData, driverStatus = [] }) {
   const [trackPoints, setTrackPoints] = useState([]);
-  const [allPositions, setAllPositions] = useState({}); 
+  const [allPositions, setAllPositions] = useState({});
   const [bounds, setBounds] = useState({ minX: 0, maxX: 0, minY: 0, maxY: 0 });
   const [loadingMap, setLoadingMap] = useState(false);
   const svgSize = 800;
@@ -27,16 +27,16 @@ export default function Circuito({ active, trigger, followedDriver, drivers, set
   useEffect(() => {
     lastKnownPositions.current = {};
     setAllPositions({});
-    
+
     if (active && drivers && drivers.length > 0) {
-        activeDriversRef.current = drivers;
+      activeDriversRef.current = drivers;
     }
-  }, [trigger]); 
+  }, [trigger]);
 
   // Actualizar pilotos activos si la lista llega después del trigger 
   useEffect(() => {
     if (active && drivers && drivers.length > 0 && activeDriversRef.current.length === 0) {
-        activeDriversRef.current = drivers;
+      activeDriversRef.current = drivers;
     }
   }, [drivers, active]);
 
@@ -98,7 +98,7 @@ export default function Circuito({ active, trigger, followedDriver, drivers, set
           }
         })
         .catch(err => console.error(err));
-    }, 200); 
+    }, 200);
     return () => clearInterval(interval);
   }, [active, setRaceData]);
 
@@ -146,17 +146,17 @@ export default function Circuito({ active, trigger, followedDriver, drivers, set
   }, [allPositions]);
 
   return (
-    <div className="card h-100 w-100 position-relative d-flex justify-content-center align-items-center bg-black border-danger shadow" 
-          style={{ borderWidth: '2px', borderRadius: '15px', height: '800px' }}>
-      
+    <div className="card h-100 w-100 position-relative d-flex justify-content-center align-items-center bg-black border-danger shadow"
+      style={{ borderWidth: '2px', borderRadius: '15px', height: '800px' }}>
+
       {!active && <div className="text-secondary z-1">Selecciona una sesión para comenzar</div>}
       {active && loadingMap && trackPoints.length === 0 && <div className="spinner-border text-danger z-1" role="status"></div>}
 
       {active && trackPoints.length > 0 && (
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}> 
-          <svg viewBox={`0 0 ${svgSize} ${svgSize}`} preserveAspectRatio="xMidYMid meet" 
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'block' }}>
-            
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+          <svg viewBox={`0 0 ${svgSize} ${svgSize}`} preserveAspectRatio="xMidYMid meet"
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'block' }}>
+
             {/* Dibujo de la pista */}
             {trackSegments.map((segPoints, idx) => (
               <g key={idx}>
@@ -164,7 +164,7 @@ export default function Circuito({ active, trigger, followedDriver, drivers, set
                 <polyline points={segPoints} fill="none" stroke="#222" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
               </g>
             ))}
-            
+
             {/* Dibujo de los pilotos */}
             {Object.keys(lastKnownPositions.current).map(driverNum => {
               if (followedDriver && followedDriver !== driverNum) return null;
@@ -176,7 +176,7 @@ export default function Circuito({ active, trigger, followedDriver, drivers, set
               const status = driverStatus.find(s => String(s.driver_number) === String(driverNum));
               const lapsCompletedInDB = status ? parseInt(status.number_of_laps) : 999;
 
-              // LOGICA: DNS desaparecen ya. DNF y DSQ espera a que el líder pase a la vuelta siguiente.
+              {/*DNS desaparecen ya. DNF y DSQ espera a que el líder pase a la vuelta siguiente */}
               let shouldHide = false;
               if (status) {
                 if (status.dns) shouldHide = true;
@@ -197,13 +197,13 @@ export default function Circuito({ active, trigger, followedDriver, drivers, set
                     <animate attributeName="r" from="5" to="25" dur="2s" repeatCount="indefinite" />
                     <animate attributeName="opacity" from="0.6" to="0" dur="2s" repeatCount="indefinite" />
                   </circle>
-                  
+
                   {/* Punto del coche */}
                   <circle r="6" fill={teamColor} stroke="white" strokeWidth="2" />
-                  
+
                   {/* Número del piloto */}
-                  <text y="-12" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold" 
-                        style={{ pointerEvents: 'none', textShadow: '1px 1px 2px black' }}>
+                  <text y="-12" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold"
+                    style={{ pointerEvents: 'none', textShadow: '1px 1px 2px black' }}>
                     {driverNum}
                   </text>
                 </g>

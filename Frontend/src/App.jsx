@@ -7,52 +7,52 @@ import CircuitoInteractivo from './components/CircuitoInteractivo/CircuitoIntera
 import Login from './components/InicioSesion/Login';
 import Register from './components/InicioSesion/Register';
 import Pilotos from './components/Pilotos/Pilotos';
+import Escuderias from './components/Escuderias/Escuderias'
 import "/node_modules/flag-icons/css/flag-icons.min.css";
 
 function App() {
 
   const location = useLocation(); // Hook para detectar cambios de ruta
 
-
-  //Usamos useRef para no rerenderizar el componente innecesariamente
+  // Usamos useRef para no rerenderizar el componente innecesariamente
   const haVisitadoCircuito = useRef(false);
 
-  // --- Efecto para detener simulación en caso de cambiar de ruta ---
+  // Efecto para detener simulación en caso de cambiar de ruta 
   useEffect(() => {
-    
+
     // Si el usuario está en circuito-interactivo, marcamos que ha visitado esa ruta
     // para que cuando cambie de ruta podamos parar el flujo de datos
     if (location.pathname === '/circuito-interactivo') {
-        haVisitadoCircuito.current = true; 
-    } 
-    
+      haVisitadoCircuito.current = true;
+    }
+
     else if (haVisitadoCircuito.current) {
-        
-        console.log("Salida de circuito detectada. Enviando STOP.");
-        const url = `${URL_API_BACKEND}/location/stop`;
-        navigator.sendBeacon(url); // Esto en vez de fetch para garantizar que se detenga el flujo aunque se cambie de ruta
-        haVisitadoCircuito.current = false; 
+
+      console.log("Salida de circuito detectada. Enviando STOP.");
+      const url = `${URL_API_BACKEND}/location/stop`;
+      navigator.sendBeacon(url); // Esto en vez de fetch para garantizar que se detenga el flujo aunque se cambie de ruta
+      haVisitadoCircuito.current = false;
     }
 
   }, [location]);
 
   return (
     <div className="d-flex flex-column" bg-zinc-950 style={{ height: '100vh' }}>
-      
+
       <ToastContainer position="top-right" theme="dark" />
-      
+
       {/* Mostrar Navbar solo si no estamos en Login o Register */}
       {location.pathname !== '/' && location.pathname !== '/register' && (
         <Navbar />
       )}
 
-      <div className="w-100 d-flex flex-column">  
+      <div className="w-100 d-flex flex-column">
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/circuito-interactivo" element={<CircuitoInteractivo />} />
           <Route path="/pilotos" element={<Pilotos />} />
-          <Route path="/escuderias" element={<div className="p-5 text-center text-white">Escuderías</div>} />
+          <Route path="/escuderias" element={<Escuderias />} />
         </Routes>
       </div>
     </div>

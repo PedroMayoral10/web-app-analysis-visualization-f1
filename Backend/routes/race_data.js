@@ -8,6 +8,9 @@ const { connectToDB_OpenF1 } = require('../db_mongo');
 async function getRaceSnapshot(session_key, currentTime) {
     try {
         const db = await connectToDB_OpenF1();
+
+        // Obtenemos la versión más actualizada hasta el momento de cada colección para cada uno
+        // de los pilotos
         const [laps, intervals, positions, stints, drivers] = await Promise.all([
             // Última vuelta de cada piloto 
             db.collection('laps').aggregate([
@@ -32,16 +35,16 @@ async function getRaceSnapshot(session_key, currentTime) {
 
             // Último neumático/stint 
             db.collection('stints').aggregate([
-                { $match: { session_key: session_key } }, // Stints suelen ser por vuelta, no por fecha exacta
+                { $match: { session_key: session_key } }, // Stints suelen ser por vuelta
                 { $sort: { stint_number: -1 } },
                 { $group: { _id: "$driver_number", data: { $first: "$$ROOT" } } }
             ]).toArray(),
 
-            // Datos estáticos de pilotos (Nombre, equipo, color)
+            // Datos estáticos de pilotos
             db.collection('drivers').find({ session_key: session_key }).toArray()
         ]);
 
-        // 2. Unificamos todo en un objeto mapeado por driver_number
+        // Unificamos todo en un objeto mapeado por driver_number
         const snapshot = {};
 
         // Primero los datos base del piloto
@@ -68,7 +71,7 @@ async function getRaceSnapshot(session_key, currentTime) {
                 snapshot[l._id].s1 = l.data.duration_sector_1;
                 snapshot[l._id].s2 = l.data.duration_sector_2;
                 snapshot[l._id].s3 = l.data.duration_sector_3;
-                snapshot[l._id].date_start = l.data.date_start; // Importante para la lógica de "revelar" sectores
+                snapshot[l._id].date_start = l.data.date_start;
             }
         });
 

@@ -6,19 +6,18 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table"; 
+} from "../ui/table";
 
-export default function TablaCarrera({ raceData, driverStatus = [], totalLaps = 0 }) {
+export default function TablaCarrera({ raceData, driverStatus = [] }) {
   const [records, setRecords] = useState({
     session: { s1: 999, s2: 999, s3: 999 },
     personal: {},
-    lastGaps: {} 
+    lastGaps: {}
   });
 
   const [displayedLaps, setDisplayedLaps] = useState({});
 
   const actualData = useMemo(() => {
-    // IMPORTANTE: Tu backend envía race_table, priorizamos eso.
     return raceData?.race_table || raceData?.snapshot || {};
   }, [raceData]);
 
@@ -39,10 +38,10 @@ export default function TablaCarrera({ raceData, driverStatus = [], totalLaps = 
 
     // Vuelta actual del líder
     const leaderLap = Math.max(
-        ...Object.values(actualData)
-            .filter(d => d.lap_number)
-            .map(d => parseInt(d.lap_number) || 0),
-        0
+      ...Object.values(actualData)
+        .filter(d => d.lap_number)
+        .map(d => parseInt(d.lap_number) || 0),
+      0
     );
 
     return Object.entries(actualData)
@@ -50,20 +49,20 @@ export default function TablaCarrera({ raceData, driverStatus = [], totalLaps = 
       .map(([number, details]) => {
         const statusInfo = driverStatus.find(s => String(s.driver_number) === String(number));
         const lapsCompletedInDB = statusInfo ? parseInt(statusInfo.number_of_laps) : 999;
-        
+
         let displayPos = details.position;
         let isOut = false;
 
         if (statusInfo) {
-            if (statusInfo.dns) { isOut = true; displayPos = "DNS"; }
-            else if (statusInfo.dsq && lapsCompletedInDB >= 0 && leaderLap > lapsCompletedInDB) { 
-              isOut = true; 
-              displayPos = "DSQ"; 
-            }
-            else if (statusInfo.dnf && lapsCompletedInDB >= 0 && leaderLap > lapsCompletedInDB) {
-                isOut = true;
-                displayPos = "DNF";
-            }
+          if (statusInfo.dns) { isOut = true; displayPos = "DNS"; }
+          else if (statusInfo.dsq && lapsCompletedInDB >= 0 && leaderLap > lapsCompletedInDB) {
+            isOut = true;
+            displayPos = "DSQ";
+          }
+          else if (statusInfo.dnf && lapsCompletedInDB >= 0 && leaderLap > lapsCompletedInDB) {
+            isOut = true;
+            displayPos = "DNF";
+          }
         }
 
         return {
@@ -80,7 +79,7 @@ export default function TablaCarrera({ raceData, driverStatus = [], totalLaps = 
   // Lógica de actualización de tiempos
   useEffect(() => {
     if (!actualData || Object.keys(actualData).length === 0) return;
-    
+
     let updatedSession = { ...records.session };
     let updatedPersonal = { ...records.personal };
     let updatedDisplayedLaps = { ...displayedLaps };
@@ -105,7 +104,7 @@ export default function TablaCarrera({ raceData, driverStatus = [], totalLaps = 
           changed = true;
         }
       }
-      
+
       if (!updatedPersonal[driverNum]) updatedPersonal[driverNum] = { s1: 999, s2: 999, s3: 999 };
       ["s1", "s2", "s3"].forEach(s => {
         const val = parseFloat(data[s]);
@@ -134,15 +133,15 @@ export default function TablaCarrera({ raceData, driverStatus = [], totalLaps = 
   const renderLastLap = (driver) => {
     if (driver.isOut) return "-";
     const displayedValue = displayedLaps[driver.number];
-    return (displayedValue && displayedValue !== "-") 
-      ? formatRaceTime(displayedValue) 
+    return (displayedValue && displayedValue !== "-")
+      ? formatRaceTime(displayedValue)
       : <span className="animate-pulse text-gray-700">...</span>;
   };
 
   const renderSector = (driver, sectorValue, sectorNumber) => {
     if (driver.isOut) return "-";
 
-    // En la vuelta de formación (lap 1) no hay sectores, mostramos esperando
+    // En la vuelta de formación (lap 0) no hay sectores, mostramos esperando
     const currentLap = parseInt(driver.lap_number) || 0;
     if (currentLap < 1) {
       return <span className="animate-pulse text-gray-700 text-[10px]">...</span>;
@@ -214,15 +213,14 @@ export default function TablaCarrera({ raceData, driverStatus = [], totalLaps = 
             </TableHeader>
             <TableBody>
               {driversArray.map((driver) => {
-                 const isLeader = driver.displayPos === "1" || driver.displayPos === 1;
-                 const loadingDots = <span className="animate-pulse text-gray-700">...</span>;
-                 
-                 return (
-                  <TableRow 
-                    key={driver.number} 
-                    className={`bg-black text-white border-zinc-800 transition-colors h-11 ${
-                      driver.isOut ? "opacity-40 grayscale-[0.8]" : "hover:bg-zinc-900"
-                    }`}
+                const isLeader = driver.displayPos === "1" || driver.displayPos === 1;
+                const loadingDots = <span className="animate-pulse text-gray-700">...</span>;
+
+                return (
+                  <TableRow
+                    key={driver.number}
+                    className={`bg-black text-white border-zinc-800 transition-colors h-11 ${driver.isOut ? "opacity-40 grayscale-[0.8]" : "hover:bg-zinc-900"
+                      }`}
                   >
                     <TableCell className={`text-center font-bold text-xl italic p-0 ${driver.isOut ? "text-red-600" : ""}`}>
                       {driver.displayPos}
@@ -230,12 +228,12 @@ export default function TablaCarrera({ raceData, driverStatus = [], totalLaps = 
 
                     <TableCell className="text-center p-0">
                       <div className="flex flex-col items-center justify-center">
-                        <div className="py-0.5 rounded-sm font-black text-[13px] uppercase shadow-sm text-center" 
-                             style={{ 
-                               backgroundColor: `#${(driver.team_color || '444').replace('#','')}`, 
-                               width: '65px',
-                               filter: driver.isOut ? 'brightness(0.5)' : 'none'
-                             }}>
+                        <div className="py-0.5 rounded-sm font-black text-[13px] uppercase shadow-sm text-center"
+                          style={{
+                            backgroundColor: `#${(driver.team_color || '444').replace('#', '')}`,
+                            width: '65px',
+                            filter: driver.isOut ? 'brightness(0.5)' : 'none'
+                          }}>
                           {driver.acronym}
                         </div>
                       </div>
@@ -259,14 +257,14 @@ export default function TablaCarrera({ raceData, driverStatus = [], totalLaps = 
                     <TableCell className="text-center font-mono font-bold text-white text-[15px] p-0">{renderLastLap(driver)}</TableCell>
 
                     <TableCell className="text-center p-0">
-                       <div className="flex justify-center items-center">
-                          <span className={`text-[14px] font-black w-7 h-7 flex items-center justify-center rounded-full border-[3px] ${getTyreColor(driver.compound)}`}>
-                            {driver.compound?.charAt(0).toUpperCase() || '-'}
-                          </span>
-                       </div>
+                      <div className="flex justify-center items-center">
+                        <span className={`text-[14px] font-black w-7 h-7 flex items-center justify-center rounded-full border-[3px] ${getTyreColor(driver.compound)}`}>
+                          {driver.compound?.charAt(0).toUpperCase() || '-'}
+                        </span>
+                      </div>
                     </TableCell>
                   </TableRow>
-                 );
+                );
               })}
             </TableBody>
           </Table>

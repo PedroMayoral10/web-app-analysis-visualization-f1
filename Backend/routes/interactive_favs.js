@@ -15,7 +15,6 @@ router.post('/add', verifyToken, async function(req, res) {
             return res.status(400).json({ error: "Faltan datos para guardar" });
         }
 
-        // Comprobamos si ya existe para no duplicarlo
         const existe = await db.collection('interactive_favourites').findOne({
             userId: new ObjectId(req.user._id), 
             year: year,
@@ -27,7 +26,6 @@ router.post('/add', verifyToken, async function(req, res) {
             return res.status(409).json({ message: "Ya lo tienes en favoritos" });
         }
 
-        // Creamos el objeto nuevo
         const newFavourite = {
             userId: new ObjectId(req.user._id), // Guardamos el ID del usuario para poder recuperar sus favoritos más adelante
             year,
@@ -37,7 +35,6 @@ router.post('/add', verifyToken, async function(req, res) {
             dateAdded: new Date()
         };
 
-        // Lo guardamos en la coleccion
         await db.collection('interactive_favourites').insertOne(newFavourite);
 
         res.status(200).json({ message: "Guardado en colección separada" });
@@ -55,10 +52,10 @@ router.get('/list', verifyToken, async function(req, res) {
     try {
         const db = await connectToDB_OpenF1();
 
-        // Buscamos TODOS los documentos en 'interactive_favourites' que tengan el userId del usuario actual
+        // Buscamos los documentos que tengan el userId del usuario actual
         const list = await db.collection('interactive_favourites')
             .find({ userId: new ObjectId(req.user._id) })
-            .toArray(); // Convertimos el cursor a array
+            .toArray(); 
 
         res.status(200).json({ favorites: list });
 

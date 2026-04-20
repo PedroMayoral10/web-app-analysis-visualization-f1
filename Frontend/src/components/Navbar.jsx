@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/navigation-menu";
 
 export default function Navbar() {
-  
+
   // Estado para saber si hay alguien logueado o es un invitado
   const [estaLogueado, setEstaLogueado] = useState(false);
-  
+
   const navigate = useNavigate();
 
   // Función para cerrar sesión
@@ -21,33 +21,30 @@ export default function Navbar() {
     // Borramos el token (Limpieza explícita)
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-
-    // Redirigimos al Login
     navigate('/');
   };
 
   // Al cargar la barra, comprobamos si existe el token
   useEffect(() => {
     const token = localStorage.getItem('token');
-    // Si hay token, es true. Si es null, es false.
     setEstaLogueado(!!token);
   }, []);
 
   return (
     <div className="p-3 shadow-sm border-bottom border-secondary bg-dark" style={{ height: '70px' }}>
       <div className="d-flex justify-content-between align-items-center">
-        
-        <h1 
-          className="text-uppercase fw-bold m-0 h4 text-white" 
+
+        <h1
+          className="text-uppercase fw-bold m-0 h4 text-white"
           style={{ borderLeft: '5px solid #e10600', paddingLeft: '15px' }}
         >
-          F1 Digital Twin
+          F1 Web App
         </h1>
 
         <NavigationMenu>
           <NavigationMenuList className="d-flex gap-2 list-unstyled m-0">
-            
-            {/* BOTÓN 1: CIRCUITO */}
+
+            {/* CIRCUITO */}
             <NavigationMenuItem>
               <Link to="/circuito-interactivo">
                 <NavigationMenuLink className={`${navigationMenuTriggerStyle()} bg-transparent text-white hover:bg-white hover:text-black`}>
@@ -56,7 +53,7 @@ export default function Navbar() {
               </Link>
             </NavigationMenuItem>
 
-            {/* BOTÓN 2: PILOTOS */}
+            {/* PILOTOS */}
             <NavigationMenuItem>
               <Link to="/pilotos">
                 <NavigationMenuLink className={`${navigationMenuTriggerStyle()} bg-transparent text-white hover:bg-white hover:text-black`}>
@@ -65,7 +62,7 @@ export default function Navbar() {
               </Link>
             </NavigationMenuItem>
 
-            {/* BOTÓN 3: ESCUDERÍAS */}
+            {/* ESCUDERÍAS */}
             <NavigationMenuItem>
               <Link to="/escuderias">
                 <NavigationMenuLink className={`${navigationMenuTriggerStyle()} bg-transparent text-white hover:bg-white hover:text-black`}>
@@ -76,25 +73,25 @@ export default function Navbar() {
 
             {/* INICIAR/CERRAR SESIÓN */}
             {estaLogueado ? (
-                <NavigationMenuItem>
-                    <button 
-                      onClick={handleLogout}
-                      className={`${navigationMenuTriggerStyle()} bg-transparent text-danger fw-bold border-0 hover:bg-danger hover:text-white`}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      Cerrar Sesión
-                    </button>
-                </NavigationMenuItem>
+              <NavigationMenuItem>
+                <button
+                  onClick={handleLogout}
+                  className={`${navigationMenuTriggerStyle()} bg-transparent text-danger fw-bold border-0 hover:bg-danger hover:text-white`}
+                  style={{ cursor: 'pointer' }}
+                >
+                  Cerrar Sesión
+                </button>
+              </NavigationMenuItem>
             ) : (
-                <NavigationMenuItem>
-                    <button 
-                        onClick={() => navigate('/')} // <--- Usamos navigate en vez de Link
-                        className={`${navigationMenuTriggerStyle()} bg-transparent text-danger fw-bold border-0 hover:bg-danger hover:text-white`}
-                        style={{ cursor: 'pointer' }}
-                    >
-                        Iniciar Sesión
-                    </button>
-                </NavigationMenuItem>
+              <NavigationMenuItem>
+                <button
+                  onClick={() => navigate('/')} // <--- Usamos navigate en vez de Link
+                  className={`${navigationMenuTriggerStyle()} bg-transparent text-danger fw-bold border-0 hover:bg-danger hover:text-white`}
+                  style={{ cursor: 'pointer' }}
+                >
+                  Iniciar Sesión
+                </button>
+              </NavigationMenuItem>
             )}
           </NavigationMenuList>
         </NavigationMenu>
